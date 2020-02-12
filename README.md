@@ -14,6 +14,7 @@ $ todocui
 |   n   | Create new todo |
 |   d   | Delete selected todo |
 |   q   | Save and Finish todocli |
+|   x   | Complete/Uncomplete selected todo |
 |   a   | Set todo priority A |
 |   b   | Set todo priority B |
 |   c   | Set todo priority C |
