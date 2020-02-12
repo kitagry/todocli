@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -9,7 +10,11 @@ import (
 	"github.com/rivo/tview"
 )
 
-var todolist todotxt.TaskList
+var (
+	todotxtPath string
+
+	todolist todotxt.TaskList
+)
 
 const headerLine = 0
 
@@ -125,7 +130,10 @@ func newTable(pages *tview.Pages) {
 }
 
 func main() {
-	f, err := os.Open("todo.txt")
+	flag.StringVar(&todotxtPath, "f", "todo.txt", "todo.txt path")
+	flag.Parse()
+
+	f, err := os.Open(todotxtPath)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -148,7 +156,7 @@ func main() {
 		if page, _ := pages.GetFrontPage(); page == "todo-list" && event.Modifiers() == tcell.ModNone {
 			switch event.Rune() {
 			case 'q':
-				f, err := os.Create("todo.txt")
+				f, err := os.Create(todotxtPath)
 				if err != nil {
 					return event
 				}
