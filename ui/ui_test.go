@@ -1,9 +1,13 @@
 package ui
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/kitagry/go-todotxt"
+)
 
 func TestNewUi(t *testing.T) {
-	u := NewUI()
+	u := NewApplication([]*todotxt.Task{})
 	if u.Pages == nil {
 		t.Errorf("u.Pages should be not null")
 	}

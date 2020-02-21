@@ -23,15 +23,17 @@ func main() {
 	flag.Parse()
 
 	f, err := os.Open(todotxtPath)
-	if err != nil {
-		fmt.Println(err)
-		return
+	if err == nil {
+		defer f.Close()
+		r := todotxt.NewReader(f)
+		todolist, err = r.ReadAll()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 	}
-	defer f.Close()
 
-	r := todotxt.NewReader(f)
-	todolist, err = r.ReadAll()
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		fmt.Println(err)
 		return
 	}
@@ -39,7 +41,7 @@ func main() {
 	app := ui.NewApplication(todolist)
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if page, _ := app.Pages.GetFrontPage(); page == "todo-list" && event.Modifiers() == tcell.ModNone {
+		if page, _ := app.Pages.GetFrontPage(); page == "table" && event.Modifiers() == tcell.ModNone {
 			switch event.Rune() {
 			case 'q':
 				f, err := os.Create(todotxtPath)

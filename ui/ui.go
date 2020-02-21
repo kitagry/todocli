@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+
 	"github.com/gdamore/tcell"
 	"github.com/kitagry/go-todotxt"
 	"github.com/rivo/tview"
@@ -62,8 +64,17 @@ func NewApplication(todolist []*todotxt.Task) *App {
 				if row == 0 {
 					return event
 				}
-				removeTask(todolist, row-1)
-				t.RemoveRow(row)
+				confirm := tview.NewModal().
+					SetText(fmt.Sprintf(`Do you want to delete task?\n"%s"`, todolist[row-1].Description())).
+					AddButtons([]string{"Delete", "Cancel"}).
+					SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+						if buttonLabel == "Delete" {
+							removeTask(todolist, row-1)
+							t.RemoveRow(row)
+						}
+						p.RemovePage("confirm")
+					})
+				p.AddAndSwitchToPage("confirm", confirm, true)
 			case 'x':
 				row, _ := t.GetSelection()
 				todo := todolist[row-1]
@@ -74,7 +85,7 @@ func NewApplication(todolist []*todotxt.Task) *App {
 				}
 				t.WriteTask(todo, row)
 			case 'n':
-				inputText := tview.NewInputField()
+				inputText := tview.NewInputField().SetLabel("Input new task description: ")
 				inputText.SetDoneFunc(func(key tcell.Key) {
 					todo := todotxt.NewTask()
 					todo.SetDescription(inputText.GetText())
