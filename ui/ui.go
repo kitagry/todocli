@@ -2,10 +2,12 @@ package ui
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/gdamore/tcell"
 	"github.com/kitagry/go-todotxt"
 	"github.com/rivo/tview"
+	"golang.org/x/xerrors"
 )
 
 const (
@@ -26,16 +28,24 @@ func NewApplication(todolist []*todotxt.Task) *App {
 	p := tview.NewPages()
 
 	t := NewTable()
-	t.WriteTasks(todolist)
+
+	app := &App{
+		Application: tview.NewApplication(),
+		Pages:       p,
+		Table:       t,
+		todolist:    todolist,
+	}
+
+	t.WriteTasks(app.todolist)
 	t.Select(1, 1).SetSelectable(true, false)
 	t.SetSelectedFunc(func(row, column int) {
 		if row == 0 {
 			return
 		}
-		inputText := tview.NewInputField().SetText(todolist[row-1].Description())
+		inputText := tview.NewInputField().SetText(app.todolist[row-1].Description())
 		inputText.SetDoneFunc(func(key tcell.Key) {
-			todolist[row-1].SetDescription(inputText.GetText())
-			t.WriteTask(todolist[row-1], row)
+			app.todolist[row-1].SetDescription(inputText.GetText())
+			t.WriteTask(app.todolist[row-1], row)
 			p.RemovePage("input")
 		})
 		p.AddAndSwitchToPage("input", inputText, true)
@@ -46,17 +56,17 @@ func NewApplication(todolist []*todotxt.Task) *App {
 			switch event.Rune() {
 			case 'a':
 				row, _ := t.GetSelection()
-				todo := todolist[row-1]
+				todo := app.todolist[row-1]
 				todo.SetPriority('A')
 				t.WriteTask(todo, row)
 			case 'b':
 				row, _ := t.GetSelection()
-				todo := todolist[row-1]
+				todo := app.todolist[row-1]
 				todo.SetPriority('B')
 				t.WriteTask(todo, row)
 			case 'c':
 				row, _ := t.GetSelection()
-				todo := todolist[row-1]
+				todo := app.todolist[row-1]
 				todo.SetPriority('C')
 				t.WriteTask(todo, row)
 			case 'd':
@@ -65,11 +75,11 @@ func NewApplication(todolist []*todotxt.Task) *App {
 					return event
 				}
 				confirm := tview.NewModal().
-					SetText(fmt.Sprintf(`Do you want to delete task?\n"%s"`, todolist[row-1].Description())).
+					SetText(fmt.Sprintf(`Do you want to delete task?\n"%s"`, app.todolist[row-1].Description())).
 					AddButtons([]string{"Delete", "Cancel"}).
 					SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 						if buttonLabel == "Delete" {
-							removeTask(todolist, row-1)
+							app.todolist = removeTask(app.todolist, row-1)
 							t.RemoveRow(row)
 						}
 						p.RemovePage("confirm")
@@ -77,7 +87,7 @@ func NewApplication(todolist []*todotxt.Task) *App {
 				p.AddAndSwitchToPage("confirm", confirm, true)
 			case 'x':
 				row, _ := t.GetSelection()
-				todo := todolist[row-1]
+				todo := app.todolist[row-1]
 				if !todo.Completed {
 					todo.Complete()
 				} else {
@@ -89,8 +99,8 @@ func NewApplication(todolist []*todotxt.Task) *App {
 				inputText.SetDoneFunc(func(key tcell.Key) {
 					todo := todotxt.NewTask()
 					todo.SetDescription(inputText.GetText())
-					todolist = append(todolist, todo)
-					t.WriteTask(todo, len(todolist))
+					app.todolist = append(app.todolist, todo)
+					t.WriteTask(todo, len(app.todolist))
 					p.RemovePage("input")
 				})
 				p.AddAndSwitchToPage("input", inputText, true)
@@ -99,16 +109,21 @@ func NewApplication(todolist []*todotxt.Task) *App {
 		return event
 	})
 
-	app := &App{
-		Application: tview.NewApplication(),
-		Pages:       p,
-		Table:       t,
-		todolist:    todolist,
-	}
-
 	p.AddPage("table", t, true, true)
 	app.SetRoot(p, true).SetFocus(p)
 	return app
+}
+
+func (a *App) SaveTodotxt(filename string) error {
+	f, err := os.Create(filename)
+	if err != nil {
+		return xerrors.Errorf("Failed to create %s: %w", filename, err)
+	}
+	defer f.Close()
+
+	w := todotxt.NewWriter(f)
+	fmt.Println(a.todolist)
+	return w.WriteAll(a.todolist)
 }
 
 func removeTask(list []*todotxt.Task, index int) []*todotxt.Task {

@@ -44,14 +44,10 @@ func main() {
 		if page, _ := app.Pages.GetFrontPage(); page == "table" && event.Modifiers() == tcell.ModNone {
 			switch event.Rune() {
 			case 'q':
-				f, err := os.Create(todotxtPath)
+				err := app.SaveTodotxt(todotxtPath)
 				if err != nil {
-					return event
+					fmt.Println(err)
 				}
-				defer f.Close()
-
-				w := todotxt.NewWriter(f)
-				w.WriteAll(todolist)
 				app.Stop()
 			}
 		}
