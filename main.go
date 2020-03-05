@@ -49,6 +49,11 @@ func main() {
 					fmt.Println(err)
 				}
 				app.Stop()
+			case 'w':
+				err := app.SaveTodotxt(todotxtPath)
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
 		return event

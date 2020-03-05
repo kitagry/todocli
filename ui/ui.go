@@ -147,7 +147,6 @@ func (a *App) SaveTodotxt(filename string) error {
 	defer f.Close()
 
 	w := todotxt.NewWriter(f)
-	fmt.Println(a.todolist)
 	return w.WriteAll(a.todolist)
 }
 
