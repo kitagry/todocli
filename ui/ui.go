@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/gdamore/tcell"
 	"github.com/kitagry/go-todotxt"
@@ -85,6 +86,30 @@ func NewApplication(todolist []*todotxt.Task) *App {
 						p.RemovePage("confirm")
 					})
 				p.AddAndSwitchToPage("confirm", confirm, true)
+			case 's':
+				list := tview.NewList().
+					AddItem("Sort by priority desc", "A to Z", 'a', func() {
+						sort.Slice(app.todolist, func(i, j int) bool {
+							return app.todolist[i].Priority() < app.todolist[j].Priority()
+						})
+						t.WriteTasks(app.todolist)
+						p.RemovePage("sort")
+					}).
+					AddItem("Sort by priority asc", "Z to A", 'b', func() {
+						sort.Slice(app.todolist, func(i, j int) bool {
+							return app.todolist[i].Priority() > app.todolist[j].Priority()
+						})
+						t.WriteTasks(app.todolist)
+						p.RemovePage("sort")
+					}).
+					AddItem("Move done task to bottom", "", 'c', func() {
+						sort.Slice(app.todolist, func(i, j int) bool {
+							return !app.todolist[i].Completed
+						})
+						t.WriteTasks(app.todolist)
+						p.RemovePage("sort")
+					})
+				p.AddAndSwitchToPage("sort", list, true)
 			case 'x':
 				row, _ := t.GetSelection()
 				todo := app.todolist[row-1]
