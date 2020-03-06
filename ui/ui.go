@@ -57,16 +57,25 @@ func NewApplication(todolist []*todotxt.Task) *App {
 			switch event.Rune() {
 			case 'a':
 				row, _ := t.GetSelection()
+				if row == 0 {
+					return event
+				}
 				todo := app.todolist[row-1]
 				todo.SetPriority('A')
 				t.WriteTask(todo, row)
 			case 'b':
 				row, _ := t.GetSelection()
+				if row == 0 {
+					return event
+				}
 				todo := app.todolist[row-1]
 				todo.SetPriority('B')
 				t.WriteTask(todo, row)
 			case 'c':
 				row, _ := t.GetSelection()
+				if row == 0 {
+					return event
+				}
 				todo := app.todolist[row-1]
 				todo.SetPriority('C')
 				t.WriteTask(todo, row)
@@ -90,6 +99,11 @@ func NewApplication(todolist []*todotxt.Task) *App {
 				list := tview.NewList().
 					AddItem("Sort by priority desc", "A to Z", 'a', func() {
 						sort.Slice(app.todolist, func(i, j int) bool {
+							if app.todolist[i].Priority() == 0 {
+								return false
+							} else if app.todolist[j].Priority() == 0 {
+								return true
+							}
 							return app.todolist[i].Priority() < app.todolist[j].Priority()
 						})
 						t.WriteTasks(app.todolist)
