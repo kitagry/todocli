@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/gdamore/tcell"
 	"github.com/kitagry/go-todotxt"
+	"github.com/kitagry/todocli/todo"
 	"github.com/rivo/tview"
 )
 
@@ -72,8 +73,12 @@ func (t *Table) WriteTask(task *todotxt.Task, row int) {
 }
 
 // WriteTasks writes multiple tasks to table.
-func (t *Table) WriteTasks(tasks []*todotxt.Task) {
-	for i, task := range tasks {
-		t.WriteTask(task, i+1)
+func (t *Table) WriteTasks(s *todo.Service) {
+	for i := 0; i < s.Length(); i++ {
+		todo, err := s.GetTask(i)
+		if err != nil {
+			continue
+		}
+		t.WriteTask(todo, i+1)
 	}
 }
