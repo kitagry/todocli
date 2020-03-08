@@ -21,7 +21,7 @@ func setupService() *Service {
 		todolist[i] = newTask(fmt.Sprintf("task%d", i+1))
 	}
 	s := Service{
-		Todolist: todolist,
+		todolist: todolist,
 	}
 	return &s
 }
@@ -56,7 +56,7 @@ func TestService_SetPriority(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := s.SetPriority(test.priority, test.index)
+		_, err := s.SetPriority(test.priority, test.index)
 		if test.haserror {
 			if err == nil {
 				t.Errorf("s.SetPriority should return error")
@@ -66,7 +66,7 @@ func TestService_SetPriority(t *testing.T) {
 				t.Errorf("s.SetPriority shouldn't return error: %v", err)
 				continue
 			}
-			p := s.Todolist[test.index].Priority()
+			p := s.todolist[test.index].Priority()
 			if p != test.priority {
 				t.Errorf("Priority expect %b\ngot %b", test.priority, p)
 			}
@@ -109,8 +109,8 @@ func TestService_Delete(t *testing.T) {
 			t.Errorf("Delete should return error: %v", err)
 		}
 
-		if len(s.Todolist) != test.length {
-			t.Errorf("Delete failed, len(todolist) expect %d\ngot %d", test.length, len(s.Todolist))
+		if len(s.todolist) != test.length {
+			t.Errorf("Delete failed, len(todolist) expect %d\ngot %d", test.length, len(s.todolist))
 		}
 	}
 }
