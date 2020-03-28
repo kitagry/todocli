@@ -10,19 +10,13 @@ import (
 	"github.com/kitagry/todocli/ui"
 )
 
-var (
-	todotxtPath string
-
-	todolist []*todotxt.Task
-)
-
-const headerLine = 0
-
 func main() {
+	var todotxtPath string
 	flag.StringVar(&todotxtPath, "f", "todo.txt", "todo.txt path")
 	flag.Parse()
 
 	f, err := os.Open(todotxtPath)
+	var todolist []*todotxt.Task
 	if err == nil {
 		defer f.Close()
 		r := todotxt.NewReader(f)

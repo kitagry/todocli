@@ -9,17 +9,18 @@ TUI for [todo.txt](https://github.com/todotxt/todo.txt-cli) files.
 $ todocui
 ```
 
-|command|explain|
-|:-----:|:-----:|
-|   n   | Create new todo |
-|   d   | Delete selected todo |
-|   q   | Save and Finish todocli |
-|   x   | Complete/Uncomplete selected todo |
-|   a   | Set todo priority A |
-|   b   | Set todo priority B |
-|   c   | Set todo priority C |
-| Enter | Change todo |
-| Ctrl-C | **Unsave** and finish todocli |
+| command | explain                           |
+|:-------:|:---------------------------------:|
+| n       | Create new todo                   |
+| d       | Delete selected todo              |
+| q       | Save and Finish todocli           |
+| x       | Complete/Uncomplete selected todo |
+| a       | Set todo priority A               |
+| b       | Set todo priority B               |
+| c       | Set todo priority C               |
+| s       | Sort todo list                    |
+| Enter   | Change todo                       |
+| Ctrl-C  | **Unsave** and finish todocli     |
 
 
 ### If you are vimmer.
