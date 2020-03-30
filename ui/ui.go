@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"unicode"
 
 	"github.com/gdamore/tcell"
 	"github.com/kitagry/go-todotxt"
@@ -54,80 +55,7 @@ func NewApplication(todolist []*todotxt.Task) *App {
 		p.AddAndSwitchToPage("input", inputText, true)
 	})
 
-	t.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Modifiers() == tcell.ModNone {
-			switch event.Rune() {
-			case 'a':
-				row, _ := t.GetSelection()
-				todo, err := app.service.SetPriority('A', row-1)
-				if err == nil {
-					t.WriteTask(todo, row)
-				}
-			case 'b':
-				row, _ := t.GetSelection()
-				todo, err := app.service.SetPriority('B', row-1)
-				if err == nil {
-					t.WriteTask(todo, row)
-				}
-			case 'c':
-				row, _ := t.GetSelection()
-				todo, err := app.service.SetPriority('C', row-1)
-				if err == nil {
-					t.WriteTask(todo, row)
-				}
-			case 'd':
-				row, _ := t.GetSelection()
-				todo, err := app.service.GetTask(row - 1)
-				if err != nil {
-					return event
-				}
-				confirm := tview.NewModal().
-					SetText(fmt.Sprintf(`Do you want to delete task?\n"%s"`, todo.Description())).
-					AddButtons([]string{"Delete", "Cancel"}).
-					SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-						if buttonLabel == "Delete" {
-							app.service.Delete(row - 1)
-							t.RemoveRow(row)
-						}
-						p.RemovePage("confirm")
-					})
-				p.AddAndSwitchToPage("confirm", confirm, true)
-			case 's':
-				list := tview.NewList().
-					AddItem("Sort by priority desc", "A to Z", 'a', func() {
-						app.service.SortPriorityDesc()
-						t.WriteTasks(app.service)
-						p.RemovePage("sort")
-					}).
-					AddItem("Sort by priority asc", "Z to A", 'b', func() {
-						app.service.SortPriorityAsc()
-						t.WriteTasks(app.service)
-						p.RemovePage("sort")
-					}).
-					AddItem("Move done task to bottom", "", 'c', func() {
-						app.service.MoveCompletedTaskToBottom()
-						t.WriteTasks(app.service)
-						p.RemovePage("sort")
-					})
-				p.AddAndSwitchToPage("sort", list, true)
-			case 'x':
-				row, _ := t.GetSelection()
-				todo, err := app.service.ToggleCompleted(row - 1)
-				if err == nil {
-					t.WriteTask(todo, row)
-				}
-			case 'n':
-				inputText := tview.NewInputField().SetLabel("Input new task description: ")
-				inputText.SetDoneFunc(func(key tcell.Key) {
-					todo := app.service.AddNewTask(inputText.GetText())
-					t.WriteTask(todo, app.service.Length())
-					p.RemovePage("input")
-				})
-				p.AddAndSwitchToPage("input", inputText, true)
-			}
-		}
-		return event
-	})
+	t.SetInputCapture(app.EventHandler)
 
 	p.AddPage("table", t, true, true)
 	app.SetRoot(p, true).SetFocus(p)
@@ -138,15 +66,74 @@ func (a *App) SaveTodotxt(filename string) error {
 	return a.service.SaveTodotxt(filename)
 }
 
-func removeTask(list []*todotxt.Task, index int) []*todotxt.Task {
-	if index < 0 || index >= len(list) {
-		return list
-	}
+func (a *App) EventHandler(event *tcell.EventKey) *tcell.EventKey {
+	t := a.Table
+	p := a.Pages
 
-	if index == 0 {
-		return list[1:]
-	} else if index == len(list)-1 {
-		return list[:index]
+	if event.Modifiers() == tcell.ModNone {
+		switch event.Rune() {
+		case 'a', 'b', 'c':
+			row, _ := t.GetSelection()
+			todo, err := a.service.SetPriority(byte(unicode.ToUpper(event.Rune())), row-1)
+			if err == nil {
+				t.WriteTask(todo, row)
+			}
+		case 'd':
+			row, _ := t.GetSelection()
+			todo, err := a.service.GetTask(row - 1)
+			if err != nil {
+				return event
+			}
+			confirm := tview.NewModal().
+				SetText(fmt.Sprintf(`Do you want to delete task?\n"%s"`, todo.Description())).
+				AddButtons([]string{"Delete", "Cancel"}).
+				SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+					if buttonLabel == "Delete" {
+						err = a.service.Delete(row - 1)
+						if err == nil {
+							t.RemoveRow(row)
+						}
+					}
+					p.RemovePage("confirm")
+				})
+			p.AddAndSwitchToPage("confirm", confirm, true)
+		case 's':
+			a.AddSortListPage()
+		case 'x':
+			row, _ := t.GetSelection()
+			todo, err := a.service.ToggleCompleted(row - 1)
+			if err == nil {
+				t.WriteTask(todo, row)
+			}
+		case 'n':
+			inputText := tview.NewInputField().SetLabel("Input new task description: ")
+			inputText.SetDoneFunc(func(key tcell.Key) {
+				todo := a.service.AddNewTask(inputText.GetText())
+				t.WriteTask(todo, a.service.Length())
+				p.RemovePage("input")
+			})
+			p.AddAndSwitchToPage("input", inputText, true)
+		}
 	}
-	return append(list[:index], list[index+1:]...)
+	return event
+}
+
+func (a *App) AddSortListPage() {
+	list := tview.NewList().
+		AddItem("Sort by priority desc", "A to Z", 'a', func() {
+			a.service.SortPriorityDesc()
+			a.Table.WriteTasks(a.service)
+			a.Pages.RemovePage("sort")
+		}).
+		AddItem("Sort by priority asc", "Z to A", 'b', func() {
+			a.service.SortPriorityAsc()
+			a.Table.WriteTasks(a.service)
+			a.Pages.RemovePage("sort")
+		}).
+		AddItem("Move done task to bottom", "", 'c', func() {
+			a.service.MoveCompletedTaskToBottom()
+			a.Table.WriteTasks(a.service)
+			a.Pages.RemovePage("sort")
+		})
+	a.Pages.AddAndSwitchToPage("sort", list, true)
 }
