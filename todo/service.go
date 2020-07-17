@@ -72,13 +72,25 @@ func (s *Service) ToggleCompleted(index int) (*todotxt.Task, error) {
 }
 
 func (s *Service) SortPriorityAsc() {
-	sort.Slice(s.todolist, func(i, j int) bool {
+	sort.SliceStable(s.todolist, func(i, j int) bool {
+		if s.todolist[i].Completed {
+			return false
+		} else if s.todolist[j].Completed {
+			return true
+		}
+
 		return s.todolist[i].Priority() > s.todolist[j].Priority()
 	})
 }
 
 func (s *Service) SortPriorityDesc() {
-	sort.Slice(s.todolist, func(i, j int) bool {
+	sort.SliceStable(s.todolist, func(i, j int) bool {
+		if s.todolist[i].Completed {
+			return false
+		} else if s.todolist[j].Completed {
+			return true
+		}
+
 		if s.todolist[i].Priority() == 0 {
 			return false
 		} else if s.todolist[j].Priority() == 0 {
@@ -89,7 +101,7 @@ func (s *Service) SortPriorityDesc() {
 }
 
 func (s *Service) MoveCompletedTaskToBottom() {
-	sort.Slice(s.todolist, func(i, j int) bool {
+	sort.SliceStable(s.todolist, func(i, j int) bool {
 		return !s.todolist[i].Completed
 	})
 }

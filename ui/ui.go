@@ -129,11 +129,6 @@ func (a *App) AddSortListPage() {
 			a.service.SortPriorityAsc()
 			a.Table.WriteTasks(a.service)
 			a.Pages.RemovePage("sort")
-		}).
-		AddItem("Move done task to bottom", "", 'c', func() {
-			a.service.MoveCompletedTaskToBottom()
-			a.Table.WriteTasks(a.service)
-			a.Pages.RemovePage("sort")
 		})
 	a.Pages.AddAndSwitchToPage("sort", list, true)
 }
